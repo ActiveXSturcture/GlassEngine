@@ -1,8 +1,7 @@
 #pragma once
 
 #include "window.hpp"
-#include "Utils/d3dx12.h"
-#include "Utils/stdafx.h"
+#include "DirectXRenderer.hpp"
 
 
 namespace RenderCore
@@ -14,8 +13,11 @@ namespace RenderCore
         /* data */
         HWND hWnd;
         HWND createWin32Window();
+        inline HWND GetHwnd(){return hWnd;}
+        //LRESULT CALLBACK WindowProcedure(HWND window, UINT msg, WPARAM wp, LPARAM lp);
     public:
-        DirectXWindow(uint32_t width,uint32_t height,const char* Name);
+        DirectXWindow(DirectXRenderer* renderer);
+        DirectXWindow() = delete;
         virtual ~DirectXWindow();
 
         virtual void Resize(uint32_t width,uint32_t height) override;

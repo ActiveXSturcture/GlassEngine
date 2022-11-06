@@ -10,10 +10,10 @@ namespace RenderCore
     {
         return height;
     }
-    window::window(uint32_t width,uint32_t height,const char* Name)
+    window::window(Renderer* renderer)
     {
-        this->width = width;
-        this->height = height;
-        this->Name = Name;
+        this->width = renderer->GetWidth();
+        this->height = renderer->GetHeight();
+        this->Name = renderer->GetName();
     }
 }

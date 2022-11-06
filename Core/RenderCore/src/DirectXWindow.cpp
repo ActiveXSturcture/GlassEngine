@@ -16,10 +16,15 @@ LRESULT CALLBACK WindowProcedure(HWND window, UINT msg, WPARAM wp, LPARAM lp)
             return DefWindowProc(window, msg, wp, lp);
     }
 }
-    DirectXWindow::DirectXWindow(uint32_t width,uint32_t height,const char* Name) : window(width,height,Name)
+    DirectXWindow::DirectXWindow(DirectXRenderer* renderer) : window(renderer)
     {
+        if(hWnd)
+        {
+            DestroyWindow(hWnd);
+        }
         std::cout<<"Hello Windows"<<std::endl;
         createWin32Window();
+        
         Tick();
     }
     DirectXWindow::~DirectXWindow()
@@ -37,7 +42,7 @@ LRESULT CALLBACK WindowProcedure(HWND window, UINT msg, WPARAM wp, LPARAM lp)
     HWND DirectXWindow::createWin32Window()
     {
         // Register the window class.
-    auto myclass = TEXT("myclass");
+    auto myclass = TEXT("DXSampleClass");
     WNDCLASSEX wndclass = {
         sizeof(WNDCLASSEX), CS_DBLCLKS,
         WindowProcedure,
@@ -62,12 +67,18 @@ LRESULT CALLBACK WindowProcedure(HWND window, UINT msg, WPARAM wp, LPARAM lp)
 
     void DirectXWindow::Tick()
     {
-        int32_t second{0};
-        while (second <= 10)
+         MSG msg = {};
+         while (msg.message != WM_QUIT)
         {
-            std::cout<<"Tick: "<<second<<std::endl;
-            second++;
+        // Process any messages in the queue.
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
+    }
         
     }
+
+
 }

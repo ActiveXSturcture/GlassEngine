@@ -1,14 +1,8 @@
 #pragma once
-
 #include <iostream>
+#include "Renderer.hpp"
 
-#ifndef RENDERCORE_DLL
-    #ifdef BUILD_DLL
-        #define RENDERCORE_DLL __declspec(dllexport)
-    #else
-        #define RENDERCORE_DLL
-    #endif
-#endif
+
 
 namespace RenderCore
 {
@@ -19,7 +13,7 @@ namespace RenderCore
         uint32_t width;uint32_t height;
         const char* Name;
     public:
-        window(uint32_t width,uint32_t height,const char* Name);
+        window(Renderer* renderer);
         window() = delete;
         virtual ~window() = default;
 

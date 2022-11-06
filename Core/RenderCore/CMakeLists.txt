@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(RenderCore)
 include_directories(include)
-include_directories()
+
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SOUR_DIR)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
