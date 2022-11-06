@@ -1,0 +1,9 @@
+[submodule "Core/ThirdPartys/GLFW"]
+	path = Core/ThirdPartys/GLFW
+	url = https://github.com/glfw/glfw.git
+[submodule "Core/ThirdPartys/ImGUI"]
+	path = Core/ThirdPartys/ImGUI
+	url = https://github.com/ocornut/imgui.git
+[submodule "Core/ThirdPartys/Assimp"]
+	path = Core/ThirdPartys/Assimp
+	url = https://github.com/assimp/assimp.git
