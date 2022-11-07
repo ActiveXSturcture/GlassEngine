@@ -1,4 +1,4 @@
-#include "DirectXWindow.hpp"
+#include "DirectXRHI/DirectXWindow.hpp"
 
 namespace RenderCore
 {

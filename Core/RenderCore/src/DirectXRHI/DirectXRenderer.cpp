@@ -1,5 +1,5 @@
-#include "DirectXRenderer.hpp"
-#include "DirectXWindow.hpp"
+#include "DirectXRHI/DirectXRenderer.hpp"
+#include "DirectXRHI/DirectXWindow.hpp"
 
 namespace RenderCore
 {

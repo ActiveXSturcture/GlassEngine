@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
-#include "DirectXWindow.hpp"
-#include "DirectXRenderer.hpp"
+#include "DirectXRHI/DirectXWindow.hpp"
+#include "DirectXRHI/DirectXRenderer.hpp"
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
