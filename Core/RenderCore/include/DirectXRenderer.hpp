@@ -2,12 +2,17 @@
 
 #include "Renderer.hpp"
 #include "Utils/stdafx.h"
-#include "Utils/d3dx12.h"
+#include "Utils/DXSampleHelper.h"
 
 using Microsoft::WRL::ComPtr;
-
+using namespace DirectX;
 namespace RenderCore
 {
+    struct Vertex
+    {
+        XMFLOAT3 position;
+        XMFLOAT4 color;
+    };
     class RENDERCORE_DLL DirectXRenderer : public Renderer
     {
     protected:
@@ -15,14 +20,17 @@ namespace RenderCore
         void LoadAssets();
         void PopulateCommandList();
         void WaitForPreviousFrame();
+        void GetHardwareAdapter(IDXGIFactory4* pFactory,IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter = false);
     public:
-        DirectXRenderer(uint32_t width,uint32_t height,const char* name);
+        DirectXRenderer(uint32_t width,uint32_t height,std::wstring name);
         virtual ~DirectXRenderer();
 
         virtual void OnInit() override;
         virtual void OnUpdate() override;
         virtual void OnRender() override;
         virtual void OnDestroy() override;
+
+        friend class DirectXWindow;
 
     private:
         static const UINT FrameCount = 2;
@@ -31,13 +39,14 @@ namespace RenderCore
         CD3DX12_RECT m_scissorRect;
         ComPtr<IDXGISwapChain3> m_swapChain;
         ComPtr<ID3D12Device> m_device;
-        ComPtr<ID3D12Resource> m_renderTagrets[FrameCount];
+        ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
         ComPtr<ID3D12CommandAllocator> m_commandAllocator;
         ComPtr<ID3D12CommandQueue> m_commandQueue;
         ComPtr<ID3D12RootSignature> m_rootSignature;
         ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
         ComPtr<ID3D12PipelineState> m_pipelineState;
         ComPtr<ID3D12GraphicsCommandList> m_CommandList;
+        UINT m_rtvDescriptorSize;
 
         //App resources
         ComPtr<ID3D12Resource> m_vertexBuffer;
@@ -49,8 +58,7 @@ namespace RenderCore
         ComPtr<ID3D12Fence> m_fence;
         UINT64 m_fenceValue;
 
-
+        // Adapter info.
+        bool m_useWarpDevice;
     };
-
-    
 }

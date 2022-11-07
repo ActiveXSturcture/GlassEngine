@@ -11,18 +11,19 @@ namespace RenderCore
     {
     protected:
         /* data */
-        HWND hWnd;
-        HWND createWin32Window();
-        inline HWND GetHwnd(){return hWnd;}
-        //LRESULT CALLBACK WindowProcedure(HWND window, UINT msg, WPARAM wp, LPARAM lp);
+        static HWND hWnd;
+        DirectXRenderer* renderer;
+        static LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     public:
-        DirectXWindow(DirectXRenderer* renderer);
+        DirectXWindow(DirectXRenderer* renderer, HINSTANCE hInstance, int nCmdShow);
         DirectXWindow() = delete;
         virtual ~DirectXWindow();
 
         virtual void Resize(uint32_t width,uint32_t height) override;
         virtual bool ShouldClose() override;
 
-        virtual void Tick() override;
+        virtual void Run() override;
+
+        static inline HWND GetHwnd(){return hWnd;}
     };
 }

@@ -15,11 +15,11 @@ namespace RenderCore
         /* data */
         uint32_t bufferWidth;
         uint32_t bufferHeight;
-        const char* name;
+        std::wstring name;
         float aspectRatio;
         bool useWarpRatio;
     public:
-        Renderer(uint32_t width,uint32_t height,const char* name);
+        Renderer(uint32_t width,uint32_t height,std::wstring name);
         Renderer() = delete;
         virtual ~Renderer()=default;
 
@@ -33,8 +33,8 @@ namespace RenderCore
         virtual void OnKeyUp(uint8_t /*key*/)     {}
 
         inline uint32_t GetWidth(){return bufferWidth;}
-        inline uint32_t GetHeight(){return bufferWidth;}
-        inline const char* GetName(){return name;}
+        inline uint32_t GetHeight(){return bufferHeight;}
+        inline std::wstring GetName(){return name;}
 
     };
     

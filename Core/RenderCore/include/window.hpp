@@ -11,7 +11,7 @@ namespace RenderCore
     {
     protected:
         uint32_t width;uint32_t height;
-        const char* Name;
+        std::wstring Name;
     public:
         window(Renderer* renderer);
         window() = delete;
@@ -22,7 +22,7 @@ namespace RenderCore
 
         virtual void Resize(uint32_t width,uint32_t height)=0;
         virtual bool ShouldClose()=0;
-        virtual void Tick()=0;
+        virtual void Run()=0;
     };
     
    
