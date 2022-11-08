@@ -24,5 +24,5 @@ target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 add_subdirectory(GLFW)
 
 #AssImp
-option(ASSIMP_INSTALL OFF)
+set(ASSIMP_INSTALL OFF)
 #add_subdirectory(Assimp)
