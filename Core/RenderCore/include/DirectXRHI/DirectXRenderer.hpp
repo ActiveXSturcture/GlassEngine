@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer.hpp"
+#include "RendererBase.hpp"
 #include "Utils/stdafx.h"
 #include "Utils/DXSampleHelper.h"
 
@@ -19,7 +19,7 @@ namespace RenderCore
         XMFLOAT4 offset;
         float padding[60];  
     };
-    class RENDERCORE_DLL DirectXRenderer : public Renderer
+    class RENDERCORE_DLL DirectXRenderer : public RendererBase
     {
     protected:
         void LoadPipeline();

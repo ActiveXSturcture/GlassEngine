@@ -13,7 +13,7 @@ include_directories(include)
 
 #aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SOUR_DIR)
 file(GLOB_RECURSE SOUR_DIR *.cpp)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+#set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 add_library(RenderCore SHARED ${SOUR_DIR})
 if(MSVC)
@@ -31,4 +31,4 @@ else()
     endif()
 endif()
 
-target_link_libraries(RenderCore glfw)
+target_link_libraries(RenderCore glfw assimp imgui)

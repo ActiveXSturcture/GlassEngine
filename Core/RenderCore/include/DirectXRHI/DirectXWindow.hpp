@@ -1,13 +1,13 @@
 #pragma once
 
-#include "window.hpp"
+#include "WindowBase.hpp"
 #include "DirectXRenderer.hpp"
 
 
 namespace RenderCore
 {
 
-    class RENDERCORE_DLL DirectXWindow : public window
+    class RENDERCORE_DLL DirectXWindow : public windowBase
     {
     protected:
         /* data */

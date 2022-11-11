@@ -48,7 +48,7 @@ namespace RenderCore
         // Handle any messages the switch statement didn't.
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
-    DirectXWindow::DirectXWindow(DirectXRenderer *renderer, HINSTANCE hInstance, int nCmdShow) : window(renderer)
+    DirectXWindow::DirectXWindow(DirectXRenderer *renderer, HINSTANCE hInstance, int nCmdShow) : windowBase(renderer)
     {
         this->renderer = renderer;
         // Parse the command line parameters

@@ -3,11 +3,12 @@
 
 namespace RenderCore
 {
-    DirectXRenderer::DirectXRenderer(uint32_t width, uint32_t height, std::wstring name) : Renderer(width, height, name), m_useWarpDevice(false), m_frameIndex(0),
+    DirectXRenderer::DirectXRenderer(uint32_t width, uint32_t height, std::wstring name) : RendererBase(width, height, name), m_useWarpDevice(false), m_frameIndex(0),
                                                                                            m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
                                                                                            m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
                                                                                            m_rtvDescriptorSize(0)
     {
+        Assimp::Importer importer;
     }
 
     void DirectXRenderer::LoadPipeline()
@@ -234,9 +235,6 @@ namespace RenderCore
 
         // Create the command list.
         ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
-
-        // Command lists are created in the recording state, but there is nothing
-        // to record yet. The main loop expects it to be closed, so close it now.
 
         // Create the vertex buffer.
         {
