@@ -21,6 +21,7 @@ namespace RenderCore
         std::wstring name;
         float aspectRatio;
         bool useWarpRatio;
+        bool IsStatic;
     public:
         RendererBase(uint32_t width,uint32_t height,std::wstring name);
         RendererBase() = delete;

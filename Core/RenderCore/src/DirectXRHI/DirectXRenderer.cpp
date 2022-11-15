@@ -6,7 +6,7 @@ namespace RenderCore
     DirectXRenderer::DirectXRenderer(uint32_t width, uint32_t height, std::wstring name) : RendererBase(width, height, name), m_useWarpDevice(false), m_frameIndex(0),
                                                                                            m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
                                                                                            m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
-                                                                                           m_rtvDescriptorSize(0)
+                                                                                           m_rtvDescriptorSize(0), m_constantBufferData{}, m_pCbvDataBegin(nullptr)
     {
         Assimp::Importer importer;
     }
@@ -63,6 +63,7 @@ namespace RenderCore
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swapChainDesc.SampleDesc.Count = 1;
+        swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
         ComPtr<IDXGISwapChain1> swapChain;
 
@@ -88,6 +89,7 @@ namespace RenderCore
             rtvHeapDesc.NumDescriptors = FrameCount;
             rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
             ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+            m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
             D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
             srvHeapDesc.NumDescriptors = 1;
@@ -95,7 +97,11 @@ namespace RenderCore
             srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 
-            m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+            D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc{};
+            cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+            cbvHeapDesc.NumDescriptors = 1;
+            cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+            ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
         }
 
         // Create frame resources.
@@ -160,13 +166,6 @@ namespace RenderCore
             {
                 featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
             }
-
-            CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-            ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-
-            CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-            rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-
             D3D12_STATIC_SAMPLER_DESC sampler = {};
             sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
             sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -182,9 +181,40 @@ namespace RenderCore
             sampler.RegisterSpace = 0;
             sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-            CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-            rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+            CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+            {
+                rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+                rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+                rootParameters[0].Constants.Num32BitValues = 2;
+                rootParameters[0].Constants.ShaderRegister = 0;
+                rootParameters[0].Constants.RegisterSpace = 0;
+            }
+            {
+                // Constant Buffer View
+                rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+                rootParameters[1].Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+                rootParameters[1].Descriptor.ShaderRegister = 1;
+                rootParameters[1].Descriptor.RegisterSpace = 0;
+            }
+            {
+                rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+                CD3DX12_DESCRIPTOR_RANGE1 range;
+                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+                rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+                rootParameters[2].DescriptorTable.pDescriptorRanges = &range;
+            }
 
+            D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+                D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+                D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+                D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+                D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+                D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+            CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+            rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
             ComPtr<ID3DBlob> signature;
             ComPtr<ID3DBlob> error;
             ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
@@ -213,7 +243,7 @@ namespace RenderCore
             D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
                 {
                     {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+                    {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
             // Describe and create the graphics pipeline state object (PSO).
             D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -236,13 +266,14 @@ namespace RenderCore
         // Create the command list.
         ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
 
+        ThrowIfFailed(m_CommandList->Close());
         // Create the vertex buffer.
         {
             Vertex triangleVertices[] =
                 {
-                    {{0.0f, 0.25f * aspectRatio, 0.0f}, {0.5f, 0.0f}},
-                    {{0.25f, -0.25f * aspectRatio, 0.0f}, {1.0f, 1.0f}},
-                    {{-0.5f, -0.25f * aspectRatio, 0.0f}, {0.0f, 1.0f}}};
+                    {{0.0f, 0.25f * aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+                    {{0.25f, -0.25f * aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+                    {{-0.25f, -0.25f * aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
 
             const UINT vertexBufferSize = sizeof(triangleVertices);
             ThrowIfFailed(m_device->CreateCommittedResource(
@@ -315,9 +346,26 @@ namespace RenderCore
             m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
         }
 
-        ThrowIfFailed(m_CommandList->Close());
-        ID3D12CommandList *ppCommandList[] = {m_CommandList.Get()};
-        m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+        // Create the Constant buffer
+        {
+            const UINT constantBufferSize = sizeof(SceneConstantBuffer);
+            ThrowIfFailed(m_device->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&m_constantBuffer)));
+
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+            cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+            cbvDesc.SizeInBytes = constantBufferSize;
+            m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+            CD3DX12_RANGE readRange(0, 0);
+            ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void **>(&m_pCbvDataBegin)));
+            memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+        }
 
         // Create synchronization objects and wait until assets have been uploaded to the GPU.
         {
@@ -339,9 +387,17 @@ namespace RenderCore
         // Set necessary state.
         m_CommandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-        ID3D12DescriptorHeap *ppHeaps[] = {m_srvHeap.Get()};
+        /*ID3D12DescriptorHeap *ppHeaps[] = {m_srvHeap.Get()};
         m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_CommandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+        m_CommandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());*/
+
+        ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
+        m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        m_CommandList->SetGraphicsRoot32BitConstant(0, 654.0, 0);
+        m_CommandList->SetGraphicsRoot32BitConstant(0, 123.0f, 1);
+        m_CommandList->SetGraphicsRootConstantBufferView(1,m_constantBuffer->GetGPUVirtualAddress());
+        // m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        m_CommandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
         m_CommandList->RSSetViewports(1, &m_viewport);
         m_CommandList->RSSetScissorRects(1, &m_scissorRect);
@@ -382,6 +438,16 @@ namespace RenderCore
     }
     void DirectXRenderer::OnUpdate()
     {
+        const float translationSpeed = 0.005f;
+        const float offsetBounds = 1.25f;
+
+        m_constantBufferData.offset.x += translationSpeed;
+        if (m_constantBufferData.offset.x > offsetBounds)
+        {
+            m_constantBufferData.offset.x = -offsetBounds;
+        }
+
+        memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
     }
     void DirectXRenderer::OnDestroy()
     {
@@ -405,7 +471,7 @@ namespace RenderCore
         *ppAdapter = nullptr;
         ComPtr<IDXGIAdapter1> adapter;
         ComPtr<IDXGIFactory6> factory6;
-
+        ComPtr<ID3D12Device5> pD3DDevice;
         if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
         {
             for (UINT adapterIndex{0}; SUCCEEDED(factory6->EnumAdapterByGpuPreference(
@@ -415,13 +481,15 @@ namespace RenderCore
                  ++adapterIndex)
             {
                 DXGI_ADAPTER_DESC1 desc;
+                // D3D12_FEATURE_ARCHITECTURE stArchitecture{};
                 adapter->GetDesc1(&desc);
                 if (desc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)
                 {
                     continue;
                 }
-                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, _uuidof(ID3D12Device), nullptr)))
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&pD3DDevice))))
                 {
+                    // ThrowIfFailed(pD3DDevice->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE,&stArchitecture,sizeof(D3D12_FEATURE_ARCHITECTURE1)))
                     break;
                 }
             }
@@ -446,5 +514,23 @@ namespace RenderCore
         }
 
         *ppAdapter = adapter.Detach();
+    }
+    bool DirectXRenderer::CheckTearingSupport()
+    {
+        bool allowTearing{false};
+
+        ComPtr<IDXGIFactory4> factory4;
+        if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory4))))
+        {
+            ComPtr<IDXGIFactory5> factory5;
+            if (SUCCEEDED(factory4.As(&factory5)))
+            {
+                if (FAILED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
+                {
+                    allowTearing = false;
+                }
+            }
+        }
+        return allowTearing;
     }
 }

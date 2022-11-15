@@ -23,7 +23,7 @@ namespace RenderCore
 
         ComPtr<ID3D12Device> m_device;
         ComPtr<ID3D12GraphicsCommandList> m_CommandList;
-
+        ComPtr<ID3D12RootSignature> m_RootSignature;
     public:
         StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,ComPtr<ID3D12Device> m_device,ComPtr<ID3D12GraphicsCommandList> m_CommandList);
         virtual ~StaticMeshDirectXProxy() = default;

@@ -7,11 +7,11 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 namespace RenderCore
-{
+{    
     struct Vertex
     {
         XMFLOAT3 position;
-        XMFLOAT2 uv;
+        XMFLOAT4 color;
     };
 
     struct SceneConstantBuffer
@@ -19,6 +19,7 @@ namespace RenderCore
         XMFLOAT4 offset;
         float padding[60];  
     };
+    static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
     class RENDERCORE_DLL DirectXRenderer : public RendererBase
     {
     protected:
@@ -81,5 +82,7 @@ namespace RenderCore
         bool m_useWarpDevice;
 
         std::vector<UINT8> GenerateTextureData();
+
+        bool CheckTearingSupport();
     };
 }
