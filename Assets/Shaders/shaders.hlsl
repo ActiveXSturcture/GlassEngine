@@ -13,12 +13,12 @@ cbuffer SceneConstantBuffer:register(b0)
 };
 
 
-PSInput VSMain(float4 position : POSITION, float4 color : COLOR)
+PSInput VSMain(float3 position : POSITION, float4 color : COLOR,float2 UV : TEXCOORD)
 {
     PSInput result;
 
-    result.position = position + offset;
-    result.color = color;
+    result.position = float4(position ,2.5f) + offset;
+    result.color =  color;
 
     return result;
 }

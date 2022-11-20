@@ -21,7 +21,7 @@ namespace RenderCore
         //XMFLOAT4X4 gWorldViewProj;
         float padding[60];  
     };
-    //static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+    static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
     class RENDERCORE_DLL DirectXRenderer : public RendererBase
     {
     protected:

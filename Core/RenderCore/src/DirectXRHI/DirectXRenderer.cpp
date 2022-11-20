@@ -184,7 +184,8 @@ namespace RenderCore
             CD3DX12_ROOT_PARAMETER1 rootParameters[1];
             CD3DX12_DESCRIPTOR_RANGE1 range[1];
             range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            rootParameters[0].InitAsDescriptorTable(1,&range[0],D3D12_SHADER_VISIBILITY_VERTEX);
+            //rootParameters[0].InitAsDescriptorTable(1,&range[0],D3D12_SHADER_VISIBILITY_VERTEX);
+            rootParameters[0].InitAsConstantBufferView(0);
           
             D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
                 D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
@@ -194,7 +195,7 @@ namespace RenderCore
                 D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
             CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-            rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+            rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
             ComPtr<ID3DBlob> signature;
             ComPtr<ID3DBlob> error;
             ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
@@ -430,9 +431,10 @@ namespace RenderCore
         m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
         m_CommandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());*/
 
-        ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
-        m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        //ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
+        //m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        //m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        m_CommandList->SetGraphicsRootConstantBufferView(0,m_constantBuffer->GetGPUVirtualAddress());
 
 
         m_CommandList->RSSetViewports(1, &m_viewport);

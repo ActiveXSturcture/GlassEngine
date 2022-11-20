@@ -103,14 +103,18 @@ namespace RenderCore
     void DirectXWindow::Run()
     {
         MSG msg = {};
+        time_start = time_end = GetTickCount();
         while (msg.message != WM_QUIT)
         {
+            time_start = time_end;
             // Process any messages in the queue.
             if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
+            time_end = GetTickCount();
+            //std::cout<<"FPS: "<<(1000.0f / (time_end - time_start))<<std::endl;
         }
         renderer->OnDestroy();
     }

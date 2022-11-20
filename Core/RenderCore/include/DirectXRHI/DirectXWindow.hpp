@@ -14,6 +14,8 @@ namespace RenderCore
         static HWND hWnd;
         DirectXRenderer* renderer;
         static LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+        DWORD time_start,time_end;
+        float deltaTime;
     public:
         DirectXWindow(DirectXRenderer* renderer, HINSTANCE hInstance, int nCmdShow);
         DirectXWindow() = delete;
@@ -25,5 +27,7 @@ namespace RenderCore
         virtual void Run() override;
 
         static inline HWND GetHwnd(){return hWnd;}
+
+
     };
 }
