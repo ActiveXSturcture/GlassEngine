@@ -12,14 +12,16 @@ namespace RenderCore
     {
         XMFLOAT3 position;
         XMFLOAT4 color;
+        XMFLOAT2 UV;
     };
 
     struct SceneConstantBuffer
     {
         XMFLOAT4 offset;
+        //XMFLOAT4X4 gWorldViewProj;
         float padding[60];  
     };
-    static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+    //static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
     class RENDERCORE_DLL DirectXRenderer : public RendererBase
     {
     protected:
@@ -65,6 +67,8 @@ namespace RenderCore
         //App resources
         ComPtr<ID3D12Resource> m_vertexBuffer;
         D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+        ComPtr<ID3D12Resource> m_indexBuffer;
+        D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
         //Const Buffer View
         ComPtr<ID3D12Resource> m_constantBuffer;
         SceneConstantBuffer m_constantBufferData;
