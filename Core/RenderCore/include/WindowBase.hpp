@@ -3,12 +3,8 @@
 #include <string>
 #include "RendererBase.hpp"
 
-
-
-
 namespace RenderCore
 {
-
     class RENDERCORE_DLL windowBase
     {
     protected:
@@ -26,8 +22,4 @@ namespace RenderCore
         virtual bool ShouldClose()=0;
         virtual void Run()=0;
     };
-    
-   
-    
-
 }

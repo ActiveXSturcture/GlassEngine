@@ -31,3 +31,5 @@
 #include <wrl.h>
 #include <shellapi.h>
 #include <strsafe.h>
+#include <windowsx.h>
+#include "DXSampleHelper.h"

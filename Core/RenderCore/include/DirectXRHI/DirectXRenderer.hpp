@@ -3,7 +3,7 @@
 #include "RendererBase.hpp"
 #include "Utils/stdafx.h"
 #include "Utils/DXSampleHelper.h"
-
+#include "Camera.hpp"
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 namespace RenderCore
@@ -18,8 +18,8 @@ namespace RenderCore
     struct SceneConstantBuffer
     {
         XMFLOAT4 offset;
+        float padding[60];
         //XMFLOAT4X4 gWorldViewProj;
-        float padding[60];  
     };
     static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
     class RENDERCORE_DLL DirectXRenderer : public RendererBase
@@ -35,12 +35,16 @@ namespace RenderCore
         virtual ~DirectXRenderer();
 
         virtual void OnInit() override;
-        virtual void OnUpdate() override;
+        virtual void OnUpdate(float deltaTime) override;
         virtual void OnRender() override;
         virtual void OnDestroy() override;
 
         friend class DirectXWindow;
 
+        virtual void OnKeyDown(uint8_t key) override;
+        virtual void OnKeyUp(uint8_t key) override;
+        virtual void RightKeyDraw()override;
+        virtual void LeftKeyDraw()override;
     private:
         static const UINT FrameCount = 2;
         static const UINT TextureWidth = 512;
@@ -88,5 +92,7 @@ namespace RenderCore
         std::vector<UINT8> GenerateTextureData();
 
         bool CheckTearingSupport();
+
+        Camera cam;
     };
 }

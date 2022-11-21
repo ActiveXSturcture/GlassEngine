@@ -22,19 +22,28 @@ namespace RenderCore
         float aspectRatio;
         bool useWarpRatio;
         bool IsStatic;
+        bool IsLeftButtonDown{false};
+        bool IsRightButtonDown{false};
+        int MousePosX,MousePosY;
+        float DeltaX,DeltaY;
     public:
         RendererBase(uint32_t width,uint32_t height,std::wstring name);
         RendererBase() = delete;
         virtual ~RendererBase()=default;
 
         virtual void OnInit() = 0;
-        virtual void OnUpdate() = 0;
+        virtual void OnUpdate(float deltaTime) = 0;
         virtual void OnRender() = 0;
         virtual void OnDestroy() = 0;
 
         // Samples override the event handlers to handle specific messages.
         virtual void OnKeyDown(uint8_t /*key*/)   {}
         virtual void OnKeyUp(uint8_t /*key*/)     {}
+        virtual void SetLeftButtonDown(bool isButtonDown,int posX,int posY){IsLeftButtonDown = isButtonDown;MousePosX = posX;MousePosY = MousePosY;}
+        virtual void SetRightButtonDown(bool isButtonDown,int posX,int posY){IsRightButtonDown = isButtonDown;MousePosX = posX;MousePosY = MousePosY;}
+        virtual void MouseMove(int NewPosx,int NewPosy);
+        virtual void RightKeyDraw()=0;
+        virtual void LeftKeyDraw()=0;
 
         inline uint32_t GetWidth(){return bufferWidth;}
         inline uint32_t GetHeight(){return bufferHeight;}

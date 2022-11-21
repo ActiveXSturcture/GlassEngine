@@ -6,7 +6,8 @@ namespace RenderCore
     DirectXRenderer::DirectXRenderer(uint32_t width, uint32_t height, std::wstring name) : RendererBase(width, height, name), m_useWarpDevice(false), m_frameIndex(0),
                                                                                            m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
                                                                                            m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
-                                                                                           m_rtvDescriptorSize(0), m_constantBufferData{}, m_pCbvDataBegin(nullptr)
+                                                                                           m_rtvDescriptorSize(0), m_constantBufferData{}, m_pCbvDataBegin(nullptr),
+                                                                                           cam(0,0,0,0,0,0)
     {
         Assimp::Importer importer;
     }
@@ -247,7 +248,7 @@ namespace RenderCore
 
         // Create the command list.
         ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
-
+        cam.BuildConstBuffer(m_device);
         
         // Create the vertex buffer.
         {
@@ -384,7 +385,7 @@ namespace RenderCore
             srvDesc.Texture2D.MipLevels = 1;
             m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
         }
-
+/*
         // Create the Constant buffer
         {
             const UINT constantBufferSize = sizeof(SceneConstantBuffer);
@@ -405,7 +406,7 @@ namespace RenderCore
             ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void **>(&m_pCbvDataBegin)));
             memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
         }
-    
+    */
         ThrowIfFailed(m_CommandList->Close());
         // Create synchronization objects and wait until assets have been uploaded to the GPU.
         {
@@ -434,7 +435,7 @@ namespace RenderCore
         //ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
         //m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
         //m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-        m_CommandList->SetGraphicsRootConstantBufferView(0,m_constantBuffer->GetGPUVirtualAddress());
+        m_CommandList->SetGraphicsRootConstantBufferView(0,(D3D12_GPU_VIRTUAL_ADDRESS)cam.UploadBuffer());
 
 
         m_CommandList->RSSetViewports(1, &m_viewport);
@@ -476,18 +477,28 @@ namespace RenderCore
         LoadPipeline();
         LoadAssets();
     }
-    void DirectXRenderer::OnUpdate()
+    void DirectXRenderer::OnUpdate(float deltaTime)
     {
-        const float translationSpeed = 0.005f;
+        /*const float translationSpeed = 0.005f;
         const float offsetBounds = 1.25f;
 
         m_constantBufferData.offset.x += translationSpeed;
         if (m_constantBufferData.offset.x > offsetBounds)
         {
             m_constantBufferData.offset.x = -offsetBounds;
-        }
+        }*/
 
-        memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+        //memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+        if(IsRightButtonDown)
+        {
+            cam.MoveSide(this->DeltaX * deltaTime);
+            cam.MoveUp(this->DeltaY * deltaTime);
+            //cam.MoveForward(this->DeltaX*deltaTime);
+            this->DeltaX = 0;
+            this->DeltaY = 0;
+            cam.Tick();
+        }
+        
     }
     void DirectXRenderer::OnDestroy()
     {
@@ -572,5 +583,28 @@ namespace RenderCore
             }
         }
         return allowTearing;
+    }
+
+    void DirectXRenderer::OnKeyDown(uint8_t key)
+    {
+
+    }
+    void DirectXRenderer::OnKeyUp(uint8_t key)
+    {
+
+    }
+    void DirectXRenderer::RightKeyDraw()
+    {
+        if(IsRightButtonDown)
+        {
+
+        }
+    }
+    void DirectXRenderer::LeftKeyDraw()
+    {
+        if(IsLeftButtonDown)
+        {
+
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace RenderCore
     LRESULT CALLBACK DirectXWindow::WindowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         DirectXRenderer *pSample = reinterpret_cast<DirectXRenderer *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
+        wchar_t msg[32];
         switch (message)
         {
         case WM_CREATE:
@@ -15,34 +15,96 @@ namespace RenderCore
             // Save the DXSample* passed in to CreateWindow.
             LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
             SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+            break;
         }
-            return 0;
 
         case WM_KEYDOWN:
+        {
             if (pSample)
             {
                 pSample->OnKeyDown(static_cast<UINT8>(wParam));
+                swprintf_s(msg, L"WM_KEYDOWN: 0x%x\n", wParam);
+                OutputDebugString(msg);
             }
-            return 0;
+            break;
+        }
 
         case WM_KEYUP:
+        {
             if (pSample)
             {
                 pSample->OnKeyUp(static_cast<UINT8>(wParam));
+                swprintf_s(msg, L"WM_KEYUP: 0x%x\n", wParam);
+                OutputDebugString(msg);
             }
-            return 0;
+            break;
+        }
 
         case WM_PAINT:
+        {
+            swprintf_s(msg, L"WM_PAINT: 0x%x\n", wParam);
+            OutputDebugString(msg);
             if (pSample)
             {
-                pSample->OnUpdate();
-                pSample->OnRender();
             }
-            return 0;
+            break;
+        }
 
         case WM_DESTROY:
+        {
             PostQuitMessage(0);
-            return 0;
+            break;
+        }
+
+        case WM_LBUTTONUP:
+        {
+            swprintf_s(msg, L"WM_LBUTTONUP: 0x%x\n", wParam);
+            OutputDebugString(msg);
+            int xPos = GET_X_LPARAM(lParam);
+            int yPos = GET_Y_LPARAM(lParam);
+            pSample->SetLeftButtonDown(false,xPos,yPos);
+            break;
+        }
+
+        case WM_LBUTTONDOWN:
+        {
+            swprintf_s(msg, L"WM_LBUTTONDOWN: 0x%x\n", wParam);
+            OutputDebugString(msg);
+            int xPos = GET_X_LPARAM(lParam);
+            int yPos = GET_Y_LPARAM(lParam);
+            pSample->SetLeftButtonDown(true,xPos,yPos);
+            break;
+        }
+
+        case WM_RBUTTONUP:
+        {
+            swprintf_s(msg, L"WM_RBUTTONUP: 0x%x\n", wParam);
+            OutputDebugString(msg);
+            int xPos = GET_X_LPARAM(lParam);
+            int yPos = GET_Y_LPARAM(lParam);
+            pSample->SetRightButtonDown(false,xPos,yPos);
+            break;
+        }
+
+        case WM_RBUTTONDOWN:
+        {
+            swprintf_s(msg, L"WM_RBUTTONDOWN: 0x%x\n", wParam);
+            OutputDebugString(msg);
+            int xPos = GET_X_LPARAM(lParam);
+            int yPos = GET_Y_LPARAM(lParam);
+            pSample->SetRightButtonDown(true,xPos,yPos);
+            break;
+        }
+
+        case WM_MOUSEMOVE:
+        {
+            int xPos = GET_X_LPARAM(lParam);
+            int yPos = GET_Y_LPARAM(lParam);
+            swprintf_s(msg, L"WM_MOUSEMOVE: 0x%x  %i  %i\n", wParam,xPos,yPos);
+            OutputDebugString(msg);
+            pSample->MouseMove(xPos,yPos);
+            break;
+        }
         }
 
         // Handle any messages the switch statement didn't.
@@ -113,8 +175,11 @@ namespace RenderCore
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
+            renderer->OnUpdate(deltaTime);
+            renderer->OnRender();
             time_end = GetTickCount();
-            //std::cout<<"FPS: "<<(1000.0f / (time_end - time_start))<<std::endl;
+            deltaTime = (time_end - time_start) / 1000.0f;
+            // std::cout<<"FPS: "<<(1000.0f / (time_end - time_start))<<std::endl;
         }
         renderer->OnDestroy();
     }
