@@ -31,4 +31,4 @@ else()
     endif()
 endif()
 
-target_link_libraries(RenderCore glfw assimp imgui)
+target_link_libraries(RenderCore glfw assimp imgui glm)

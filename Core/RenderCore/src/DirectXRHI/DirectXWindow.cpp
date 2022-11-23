@@ -46,6 +46,7 @@ namespace RenderCore
             OutputDebugString(msg);
             if (pSample)
             {
+                pSample->OnRender();
             }
             break;
         }

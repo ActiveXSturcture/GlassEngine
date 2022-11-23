@@ -34,4 +34,5 @@ set(ASSIMP_BUILD_TESTS OFF)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(Assimp)
 
-
+#GLM
+add_subdirectory(GLM)

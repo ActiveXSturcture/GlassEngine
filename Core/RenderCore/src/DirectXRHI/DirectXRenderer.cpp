@@ -7,7 +7,7 @@ namespace RenderCore
                                                                                            m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
                                                                                            m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
                                                                                            m_rtvDescriptorSize(0), m_constantBufferData{}, m_pCbvDataBegin(nullptr),
-                                                                                           cam(0,0,0,0,0,0)
+                                                                                           cam(0.0f, 0.0f,0.0f, 0.0f, 0.0f, 0.0f,0.4f*DirectX::XM_PI, (float)width / (float)height, 0.1f, 100.0f)
     {
         Assimp::Importer importer;
     }
@@ -185,9 +185,9 @@ namespace RenderCore
             CD3DX12_ROOT_PARAMETER1 rootParameters[1];
             CD3DX12_DESCRIPTOR_RANGE1 range[1];
             range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-            //rootParameters[0].InitAsDescriptorTable(1,&range[0],D3D12_SHADER_VISIBILITY_VERTEX);
+            // rootParameters[0].InitAsDescriptorTable(1,&range[0],D3D12_SHADER_VISIBILITY_VERTEX);
             rootParameters[0].InitAsConstantBufferView(0);
-          
+
             D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
                 D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
                 D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
@@ -230,11 +230,14 @@ namespace RenderCore
 
             // Describe and create the graphics pipeline state object (PSO).
             D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+            D3D12_RASTERIZER_DESC rasterizerDesc{};
+            rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+            //rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
             psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
             psoDesc.pRootSignature = m_rootSignature.Get();
             psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
             psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
-            psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+            psoDesc.RasterizerState = rasterizerDesc;
             psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
             psoDesc.DepthStencilState.DepthEnable = FALSE;
             psoDesc.DepthStencilState.StencilEnable = FALSE;
@@ -249,10 +252,10 @@ namespace RenderCore
         // Create the command list.
         ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
         cam.BuildConstBuffer(m_device);
-        
+
         // Create the vertex buffer.
         {
-            /*Vertex triangleVertices[] =
+            Vertex triangleVertices[] =
                 {
                     {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.0f}},
                     {{-1.0f, +1.0f, -1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
@@ -261,15 +264,14 @@ namespace RenderCore
                     {{-1.0f, -1.0f, +1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
                     {{-1.0f, +1.0f, +1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
                     {{+1.0f, +1.0f, +1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-                    {{+1.0f, -1.0f, +1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-                };*/
-            Vertex triangleVertices[] =
+                    {{+1.0f, -1.0f, +1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
+            /*Vertex triangleVertices[] =
             {
             { { -1.0f, -1.0f , 0.0f }, {0.0f, 1.0f, 0.0f, 1.0f}, {0.5f, 0.0f} },
             { { -1.0f, 1.0f , 0.0f }, {0.0f, 0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
             { { 1.0f, 1.0f , 0.0f },  {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
             {{ 1.0f, -1.0f , 0.0f },  {1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
-            };
+            };*/
 
             const UINT vertexBufferSize = sizeof(triangleVertices);
             ThrowIfFailed(m_device->CreateCommittedResource(
@@ -294,7 +296,7 @@ namespace RenderCore
         }
         // Create Index Buffer
         {
-            /*uint16_t index[] = {
+            uint16_t index[] = {
                 // front face
                 0, 1, 2,
                 0, 2, 3,
@@ -312,12 +314,12 @@ namespace RenderCore
                 1, 6, 2,
                 // bottom face
                 4, 0, 3,
-                4, 3, 7};*/
+                4, 3, 7};
 
-            uint16_t index[] = {
+            /*uint16_t index[] = {
                 0,1,2,
                 0,2,3
-            };
+            };*/
             const UINT indexBufferSize = sizeof(index);
             ThrowIfFailed(m_device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -325,8 +327,7 @@ namespace RenderCore
                 &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
                 D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
-                IID_PPV_ARGS(&m_indexBuffer)
-            ));
+                IID_PPV_ARGS(&m_indexBuffer)));
             UINT8 *pIndexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
             ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pIndexDataBegin)));
@@ -385,28 +386,28 @@ namespace RenderCore
             srvDesc.Texture2D.MipLevels = 1;
             m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
         }
-/*
-        // Create the Constant buffer
-        {
-            const UINT constantBufferSize = sizeof(SceneConstantBuffer);
-            ThrowIfFailed(m_device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_constantBuffer)));
+        /*
+                // Create the Constant buffer
+                {
+                    const UINT constantBufferSize = sizeof(SceneConstantBuffer);
+                    ThrowIfFailed(m_device->CreateCommittedResource(
+                        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                        D3D12_HEAP_FLAG_NONE,
+                        &CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
+                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                        nullptr,
+                        IID_PPV_ARGS(&m_constantBuffer)));
 
-            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-            cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-            cbvDesc.SizeInBytes = constantBufferSize;
-            m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+                    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+                    cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+                    cbvDesc.SizeInBytes = constantBufferSize;
+                    m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
 
-            CD3DX12_RANGE readRange(0, 0);
-            ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void **>(&m_pCbvDataBegin)));
-            memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-        }
-    */
+                    CD3DX12_RANGE readRange(0, 0);
+                    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void **>(&m_pCbvDataBegin)));
+                    memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+                }
+            */
         ThrowIfFailed(m_CommandList->Close());
         // Create synchronization objects and wait until assets have been uploaded to the GPU.
         {
@@ -427,16 +428,15 @@ namespace RenderCore
         ThrowIfFailed(m_CommandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
         // Set necessary state.
         m_CommandList->SetGraphicsRootSignature(m_rootSignature.Get());
-        //m_CommandList->SetPipelineState(m_pipelineState.Get());
+        // m_CommandList->SetPipelineState(m_pipelineState.Get());
         /*ID3D12DescriptorHeap *ppHeaps[] = {m_srvHeap.Get()};
         m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
         m_CommandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());*/
 
-        //ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
-        //m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        //m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-        m_CommandList->SetGraphicsRootConstantBufferView(0,(D3D12_GPU_VIRTUAL_ADDRESS)cam.UploadBuffer());
-
+        // ID3D12DescriptorHeap *ppHeaps[] = {m_cbvHeap.Get()};
+        // m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        // m_CommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        m_CommandList->SetGraphicsRootConstantBufferView(0, (D3D12_GPU_VIRTUAL_ADDRESS)cam.UploadBuffer());
 
         m_CommandList->RSSetViewports(1, &m_viewport);
         m_CommandList->RSSetScissorRects(1, &m_scissorRect);
@@ -452,7 +452,7 @@ namespace RenderCore
         m_CommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
         m_CommandList->IASetIndexBuffer(&m_indexBufferView);
 
-        m_CommandList->DrawIndexedInstanced(6, 1, 0, 0,0);
+        m_CommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
         // Indicate that the back buffer will now be used to present.
         m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -488,17 +488,34 @@ namespace RenderCore
             m_constantBufferData.offset.x = -offsetBounds;
         }*/
 
-        //memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-        if(IsRightButtonDown)
+        // memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+
+        if (IsRightButtonDown)
         {
-            cam.MoveSide(this->DeltaX * deltaTime);
-            cam.MoveUp(this->DeltaY * deltaTime);
-            //cam.MoveForward(this->DeltaX*deltaTime);
+            cam.RotateYaw(-this->DeltaX * deltaTime * 5.0f);
+            cam.RotatePitch(-this->DeltaY * deltaTime* 5.0f);
+            // cam.RotateRoll(-this->DeltaX * deltaTime);
+            // cam.MoveForward(this->DeltaX*deltaTime);
+            if (IsMoveForward)
+            {
+                cam.MoveForward(deltaTime * 5.0f);
+            }
+            else if (IsMoveBack)
+            {
+                cam.MoveForward(-deltaTime * 5.0f);
+            }
+            if (IsMoveLeft)
+            {
+                cam.MoveSide(-deltaTime * 5.0f);
+            }
+            else if (IsMoveRight)
+            {
+                cam.MoveSide(deltaTime * 5.0f);
+            }
             this->DeltaX = 0;
             this->DeltaY = 0;
-            cam.Tick();
         }
-        
+        cam.Tick();
     }
     void DirectXRenderer::OnDestroy()
     {
@@ -587,24 +604,52 @@ namespace RenderCore
 
     void DirectXRenderer::OnKeyDown(uint8_t key)
     {
-
+        if (IsRightButtonDown && key == 65)
+        {
+            IsMoveLeft = true;
+        }
+        else if (IsRightButtonDown && key == 68)
+        {
+            IsMoveRight = true;
+        }
+        else if (IsRightButtonDown && key == 83)
+        {
+            IsMoveBack = true;
+        }
+        else if (IsRightButtonDown && key == 87)
+        {
+            IsMoveForward = true;
+        }
     }
     void DirectXRenderer::OnKeyUp(uint8_t key)
     {
-
+        if (key == 65)
+        {
+            IsMoveLeft = false;
+        }
+        else if (key == 68)
+        {
+            IsMoveRight = false;
+        }
+        else if (key == 83)
+        {
+            IsMoveBack = false;
+        }
+        else if (key == 87)
+        {
+            IsMoveForward = false;
+        }
     }
     void DirectXRenderer::RightKeyDraw()
     {
-        if(IsRightButtonDown)
+        if (IsRightButtonDown)
         {
-
         }
     }
     void DirectXRenderer::LeftKeyDraw()
     {
-        if(IsLeftButtonDown)
+        if (IsLeftButtonDown)
         {
-
         }
     }
 }

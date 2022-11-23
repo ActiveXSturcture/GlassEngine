@@ -7,3 +7,6 @@
 [submodule "Core/ThirdPartys/Assimp"]
 	path = Core/ThirdPartys/Assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "Core/ThirdPartys/GLM"]
+	path = Core/ThirdPartys/GLM
+	url = https://github.com/g-truc/glm.git

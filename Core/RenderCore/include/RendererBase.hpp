@@ -24,6 +24,10 @@ namespace RenderCore
         bool IsStatic;
         bool IsLeftButtonDown{false};
         bool IsRightButtonDown{false};
+        bool IsMoveForward{false};
+        bool IsMoveBack{false};
+        bool IsMoveRight{false};
+        bool IsMoveLeft{false};
         int MousePosX,MousePosY;
         float DeltaX,DeltaY;
     public:
