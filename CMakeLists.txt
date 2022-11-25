@@ -9,7 +9,9 @@ if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Core/ThirdPartys)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Core/GUI)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Core/RenderCore)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core/RenderCore/include)
 
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)

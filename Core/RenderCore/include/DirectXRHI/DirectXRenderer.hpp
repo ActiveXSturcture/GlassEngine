@@ -50,6 +50,7 @@ namespace RenderCore
         static const UINT TextureWidth = 512;
         static const UINT TextureHeight = 512;
         static const UINT TexturePixelSize = 4;    // The number of bytes used to represent a pixel in the texture.
+        std::wstring AssetsPath;
         // Pipeline objects.
         CD3DX12_VIEWPORT m_viewport;
         CD3DX12_RECT m_scissorRect;

@@ -1,8 +1,5 @@
 #pragma once
 #include <iostream>
-#include <assimp\Importer.hpp>
-#include <assimp\scene.h>
-#include <assimp\postprocess.h>
 #ifndef RENDERCORE_DLL
     #ifdef BUILD_DLL
         #define RENDERCORE_DLL __declspec(dllexport)

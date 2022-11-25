@@ -31,4 +31,5 @@ else()
     endif()
 endif()
 
-target_link_libraries(RenderCore glfw assimp imgui glm)
+target_link_libraries(RenderCore glfw glm GUI)
+target_include_directories(RenderCore PUBLIC ../GUI/include)

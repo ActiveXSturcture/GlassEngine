@@ -9,7 +9,9 @@ namespace RenderCore
                                                                                            m_rtvDescriptorSize(0), m_constantBufferData{}, m_pCbvDataBegin(nullptr),
                                                                                            cam(0.0f, 0.0f,0.0f, 0.0f, 0.0f, 0.0f,0.4f*DirectX::XM_PI, (float)width / (float)height, 0.1f, 100.0f)
     {
-        Assimp::Importer importer;
+        WCHAR assetsPath[512];
+        GetAssetsPath(assetsPath, _countof(assetsPath));
+        AssetsPath = assetsPath;
     }
 
     void DirectXRenderer::LoadPipeline()
@@ -214,12 +216,9 @@ namespace RenderCore
             UINT compileFlags = 0;
 #endif
 
-            WCHAR assetsPath[512];
-            GetAssetsPath(assetsPath, _countof(assetsPath));
-            std::wstring path = assetsPath;
-            path += L"shaders.hlsl";
-            ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-            ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+            AssetsPath += L"shaders.hlsl";
+            ThrowIfFailed(D3DCompileFromFile(AssetsPath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+            ThrowIfFailed(D3DCompileFromFile(AssetsPath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
             // Define the vertex input layout.
             D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -255,25 +254,19 @@ namespace RenderCore
 
         // Create the vertex buffer.
         {
-            Vertex triangleVertices[] =
-                {
-                    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.0f}},
-                    {{-1.0f, +1.0f, -1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-                    {{+1.0f, +1.0f, -1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-                    {{+1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}, {0.5f, 0.0f}},
-                    {{-1.0f, -1.0f, +1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-                    {{-1.0f, +1.0f, +1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-                    {{+1.0f, +1.0f, +1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-                    {{+1.0f, -1.0f, +1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
-            /*Vertex triangleVertices[] =
+            float *pTriangleVertices = new float[72]
             {
-            { { -1.0f, -1.0f , 0.0f }, {0.0f, 1.0f, 0.0f, 1.0f}, {0.5f, 0.0f} },
-            { { -1.0f, 1.0f , 0.0f }, {0.0f, 0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
-            { { 1.0f, 1.0f , 0.0f },  {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-            {{ 1.0f, -1.0f , 0.0f },  {1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
-            };*/
+                -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 0.0f,
+                -1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+                +1.0f, +1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+                +1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.5f, 0.0f,
+                -1.0f, -1.0f, +1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                -1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+                +1.0f, +1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                +1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f           
+            };
 
-            const UINT vertexBufferSize = sizeof(triangleVertices);
+            const UINT vertexBufferSize = sizeof(float) * 72;
             ThrowIfFailed(m_device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -286,17 +279,18 @@ namespace RenderCore
             UINT8 *pVertexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
             ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+            memcpy(pVertexDataBegin, pTriangleVertices, vertexBufferSize);
             m_vertexBuffer->Unmap(0, nullptr);
 
             // Initialize the vertex buffer view.
             m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-            m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+            m_vertexBufferView.StrideInBytes = sizeof(float) * 9;
             m_vertexBufferView.SizeInBytes = vertexBufferSize;
+            delete[] pTriangleVertices;
         }
         // Create Index Buffer
         {
-            uint16_t index[] = {
+            uint16_t* pIndex = new uint16_t[36]{
                 // front face
                 0, 1, 2,
                 0, 2, 3,
@@ -314,13 +308,9 @@ namespace RenderCore
                 1, 6, 2,
                 // bottom face
                 4, 0, 3,
-                4, 3, 7};
-
-            /*uint16_t index[] = {
-                0,1,2,
-                0,2,3
-            };*/
-            const UINT indexBufferSize = sizeof(index);
+                4, 3, 7
+            };
+            const UINT indexBufferSize = sizeof(uint16_t) * 36;
             ThrowIfFailed(m_device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -331,11 +321,12 @@ namespace RenderCore
             UINT8 *pIndexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
             ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pIndexDataBegin)));
-            memcpy(pIndexDataBegin, index, sizeof(index));
+            memcpy(pIndexDataBegin, pIndex, indexBufferSize);
             m_indexBuffer->Unmap(0, nullptr);
             m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
             m_indexBufferView.SizeInBytes = indexBufferSize;
             m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+            delete[] pIndex;
         }
 
         ComPtr<ID3D12Resource> textureUploadHeap;

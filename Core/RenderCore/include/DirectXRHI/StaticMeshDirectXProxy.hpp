@@ -8,7 +8,7 @@ namespace RenderCore
 {
     class RENDERCORE_DLL StaticMeshDirectXProxy : public StaticMeshRenderProxyBase
     {
-    private:
+    protected:
         ComPtr<ID3D12Resource> m_vertexBuffer;
         D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
@@ -24,8 +24,10 @@ namespace RenderCore
         ComPtr<ID3D12Device> m_device;
         ComPtr<ID3D12GraphicsCommandList> m_CommandList;
         ComPtr<ID3D12RootSignature> m_RootSignature;
+
+        D3D12_INPUT_ELEMENT_DESC* inputLayoutDesc;
     public:
-        StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,ComPtr<ID3D12Device> m_device,ComPtr<ID3D12GraphicsCommandList> m_CommandList);
+        StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,const std::vector<GUI::INPUT_LAYOUT_OFFSET>& InputLayout,ComPtr<ID3D12Device> m_device,ComPtr<ID3D12GraphicsCommandList> m_CommandList);
         virtual ~StaticMeshDirectXProxy() = default;
 
         virtual void BuildDrawCommand() override;
@@ -35,6 +37,8 @@ namespace RenderCore
         void BuildVertexAndPixelShader();
 
         void BuildShaderResourceViewsHeap();
+
+        void InitInputLayoutDesc();
     };
     
 } // namespace RenderCore
