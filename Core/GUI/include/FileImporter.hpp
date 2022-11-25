@@ -31,7 +31,7 @@ namespace GUI
             IndexBuffer = nullptr;
             hasIndex = false;
             hasTexture = false;
-            InputLayout.empty();
+            InputLayout.clear();
         }
         ~MeshData()
         {

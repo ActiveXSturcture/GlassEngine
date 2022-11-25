@@ -1,6 +1,5 @@
 #include "DirectXRHI/DirectXRenderer.hpp"
 #include "DirectXRHI/DirectXWindow.hpp"
-
 namespace RenderCore
 {
     DirectXRenderer::DirectXRenderer(uint32_t width, uint32_t height, std::wstring name) : RendererBase(width, height, name), m_useWarpDevice(false), m_frameIndex(0),
@@ -204,132 +203,25 @@ namespace RenderCore
             ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
             ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
         }
-
-        // Create the pipeline state, which includes compiling and loading shaders.
+        std::vector<GUI::INPUT_LAYOUT_OFFSET> layout;
+        layout.push_back(GUI::INPUT_LAYOUT_POSITION);
+        layout.push_back(GUI::INPUT_LAYOUT_NORMAL);
+        layout.push_back(GUI::INPUT_LAYOUT_TEXCOORD);
+        layout.push_back(GUI::INPUT_LAYOUT_TANGENT);
+        layout.push_back(GUI::INPUT_LAYOUT_BITANGENT);
+        mesh = std::make_unique<StaticMeshDirectXProxy>(L"name",L"File",layout);
+        if(mesh->IsLoadedSucceed())
         {
-            ComPtr<ID3DBlob> vertexShader;
-            ComPtr<ID3DBlob> pixelShader;
-
-#ifdef _DEBUG
-            UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-            UINT compileFlags = 0;
-#endif
-
-            AssetsPath += L"shaders.hlsl";
-            ThrowIfFailed(D3DCompileFromFile(AssetsPath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-            ThrowIfFailed(D3DCompileFromFile(AssetsPath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
-
-            // Define the vertex input layout.
-            D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-                {
-                    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                    {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
-
-            // Describe and create the graphics pipeline state object (PSO).
-            D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-            D3D12_RASTERIZER_DESC rasterizerDesc{};
-            rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-            //rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-            psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
-            psoDesc.pRootSignature = m_rootSignature.Get();
-            psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
-            psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
-            psoDesc.RasterizerState = rasterizerDesc;
-            psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-            psoDesc.DepthStencilState.DepthEnable = FALSE;
-            psoDesc.DepthStencilState.StencilEnable = FALSE;
-            psoDesc.SampleMask = UINT_MAX;
-            psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            psoDesc.NumRenderTargets = 1;
-            psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-            psoDesc.SampleDesc.Count = 1;
-            ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+            std::cout<<"Load Succeed !"<<std::endl;
         }
-
+        mesh->BuildPSO(m_rootSignature.Get(),m_device.Get());
         // Create the command list.
-        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
+        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_CommandList)));
         cam.BuildConstBuffer(m_device);
 
-        // Create the vertex buffer.
-        {
-            float *pTriangleVertices = new float[72]
-            {
-                -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 0.0f,
-                -1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                +1.0f, +1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-                +1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.5f, 0.0f,
-                -1.0f, -1.0f, +1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                -1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-                +1.0f, +1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                +1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f           
-            };
 
-            const UINT vertexBufferSize = sizeof(float) * 72;
-            ThrowIfFailed(m_device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_vertexBuffer)));
 
-            // Copy the triangle data to the vertex buffer.
-            UINT8 *pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            memcpy(pVertexDataBegin, pTriangleVertices, vertexBufferSize);
-            m_vertexBuffer->Unmap(0, nullptr);
-
-            // Initialize the vertex buffer view.
-            m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-            m_vertexBufferView.StrideInBytes = sizeof(float) * 9;
-            m_vertexBufferView.SizeInBytes = vertexBufferSize;
-            delete[] pTriangleVertices;
-        }
-        // Create Index Buffer
-        {
-            uint16_t* pIndex = new uint16_t[36]{
-                // front face
-                0, 1, 2,
-                0, 2, 3,
-                // back face
-                4, 6, 5,
-                4, 7, 6,
-                // left face
-                4, 5, 1,
-                4, 1, 0,
-                // right face
-                3, 2, 6,
-                3, 6, 7,
-                // top face
-                1, 5, 6,
-                1, 6, 2,
-                // bottom face
-                4, 0, 3,
-                4, 3, 7
-            };
-            const UINT indexBufferSize = sizeof(uint16_t) * 36;
-            ThrowIfFailed(m_device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_indexBuffer)));
-            UINT8 *pIndexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pIndexDataBegin)));
-            memcpy(pIndexDataBegin, pIndex, indexBufferSize);
-            m_indexBuffer->Unmap(0, nullptr);
-            m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-            m_indexBufferView.SizeInBytes = indexBufferSize;
-            m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-            delete[] pIndex;
-        }
-
-        ComPtr<ID3D12Resource> textureUploadHeap;
+        /*ComPtr<ID3D12Resource> textureUploadHeap;
         // create the texture
         {
             D3D12_RESOURCE_DESC textureDesc{};
@@ -376,10 +268,10 @@ namespace RenderCore
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             srvDesc.Texture2D.MipLevels = 1;
             m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
-        }
+        }*/
         /*
-                // Create the Constant buffer
-                {
+        // Create the Constant buffer
+        {
                     const UINT constantBufferSize = sizeof(SceneConstantBuffer);
                     ThrowIfFailed(m_device->CreateCommittedResource(
                         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -398,7 +290,7 @@ namespace RenderCore
                     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void **>(&m_pCbvDataBegin)));
                     memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
                 }
-            */
+        */
         ThrowIfFailed(m_CommandList->Close());
         // Create synchronization objects and wait until assets have been uploaded to the GPU.
         {
@@ -416,7 +308,7 @@ namespace RenderCore
     void DirectXRenderer::PopulateCommandList()
     {
         ThrowIfFailed(m_commandAllocator->Reset());
-        ThrowIfFailed(m_CommandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
+        ThrowIfFailed(m_CommandList->Reset(m_commandAllocator.Get(), nullptr));
         // Set necessary state.
         m_CommandList->SetGraphicsRootSignature(m_rootSignature.Get());
         // m_CommandList->SetPipelineState(m_pipelineState.Get());
@@ -439,12 +331,8 @@ namespace RenderCore
         // Record commands.
         const float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
         m_CommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-        m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        m_CommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-        m_CommandList->IASetIndexBuffer(&m_indexBufferView);
 
-        m_CommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
+        //mesh->PopulateDrawCommand(m_CommandList);
         // Indicate that the back buffer will now be used to present.
         m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -470,16 +358,6 @@ namespace RenderCore
     }
     void DirectXRenderer::OnUpdate(float deltaTime)
     {
-        /*const float translationSpeed = 0.005f;
-        const float offsetBounds = 1.25f;
-
-        m_constantBufferData.offset.x += translationSpeed;
-        if (m_constantBufferData.offset.x > offsetBounds)
-        {
-            m_constantBufferData.offset.x = -offsetBounds;
-        }*/
-
-        // memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
         if (IsRightButtonDown)
         {

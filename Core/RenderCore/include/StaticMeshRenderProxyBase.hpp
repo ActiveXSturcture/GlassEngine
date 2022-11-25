@@ -19,10 +19,9 @@ namespace RenderCore
         ~StaticMeshRenderProxyBase() = default;
         inline const std::wstring& GetName(){return Name;}
         inline const std::wstring& GetFilePath(){return FilePath;}
-        virtual bool LoadFromFile()=0;
+        //virtual bool LoadFromFile()=0;
         virtual void BuildDrawCommand() = 0;
-        virtual void PopulateDrawCommand()=0;
-        virtual void Tick(float deltaTime)=0;
+        //virtual void Tick(float deltaTime)=0;
         inline bool IsLoadedSucceed(){return bIsLoaded;}
     };
     

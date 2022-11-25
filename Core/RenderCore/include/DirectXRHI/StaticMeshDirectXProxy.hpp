@@ -2,8 +2,6 @@
 #include "DirectXRenderer.hpp"
 #include "StaticMeshRenderProxyBase.hpp"
 
-
-
 namespace RenderCore
 {
     class RENDERCORE_DLL StaticMeshDirectXProxy : public StaticMeshRenderProxyBase
@@ -21,22 +19,29 @@ namespace RenderCore
         ComPtr<ID3DBlob> vertexShader;
         ComPtr<ID3DBlob> pixelShader;
 
-        ComPtr<ID3D12Device> m_device;
-        ComPtr<ID3D12GraphicsCommandList> m_CommandList;
-        ComPtr<ID3D12RootSignature> m_RootSignature;
+        ComPtr<ID3D12PipelineState> m_pipelineState;
 
         D3D12_INPUT_ELEMENT_DESC* inputLayoutDesc;
+        uint16_t inputLayoutSize,NumIndices;
+        std::wstring AssetsPath;
     public:
-        StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,const std::vector<GUI::INPUT_LAYOUT_OFFSET>& InputLayout,ComPtr<ID3D12Device> m_device,ComPtr<ID3D12GraphicsCommandList> m_CommandList);
+        StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,
+        const std::vector<GUI::INPUT_LAYOUT_OFFSET>& InputLayout);
         virtual ~StaticMeshDirectXProxy() = default;
 
         virtual void BuildDrawCommand() override;
 
-        virtual void PopulateDrawCommand() override;
+        virtual void PopulateDrawCommand(ComPtr<ID3D12GraphicsCommandList> m_CommandList);
+
+        inline ID3D12PipelineState* GetPSO(){return m_pipelineState.Get();}
+
+        void BuildPSO(ID3D12RootSignature* m_RootSignature,ID3D12Device* m_device);
     protected:
         void BuildVertexAndPixelShader();
 
-        void BuildShaderResourceViewsHeap();
+        void BuildVertexAndIndexBuffer(ID3D12Device* m_device);
+
+        void BuildShaderResourceViewsHeap(ID3D12Device* m_device);
 
         void InitInputLayoutDesc();
     };

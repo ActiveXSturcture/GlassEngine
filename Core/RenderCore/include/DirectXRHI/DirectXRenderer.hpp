@@ -2,8 +2,9 @@
 
 #include "RendererBase.hpp"
 #include "Utils/stdafx.h"
-#include "Utils/DXSampleHelper.h"
 #include "Camera.hpp"
+#include "StaticMeshDirectXProxy.hpp"
+#include "FileImporter.hpp"
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 namespace RenderCore
@@ -65,15 +66,9 @@ namespace RenderCore
         ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
         //Shader Resource View
         ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-        ComPtr<ID3D12PipelineState> m_pipelineState;
         ComPtr<ID3D12GraphicsCommandList> m_CommandList;
         UINT m_rtvDescriptorSize;
 
-        //App resources
-        ComPtr<ID3D12Resource> m_vertexBuffer;
-        D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-        ComPtr<ID3D12Resource> m_indexBuffer;
-        D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
         //Const Buffer View
         ComPtr<ID3D12Resource> m_constantBuffer;
         SceneConstantBuffer m_constantBufferData;
@@ -95,5 +90,7 @@ namespace RenderCore
         bool CheckTearingSupport();
 
         Camera cam;
+
+        std::unique_ptr<class StaticMeshDirectXProxy> mesh;
     };
 }
