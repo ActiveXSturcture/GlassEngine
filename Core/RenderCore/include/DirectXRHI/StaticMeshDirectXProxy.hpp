@@ -2,6 +2,9 @@
 #include "DirectXRenderer.hpp"
 #include "StaticMeshRenderProxyBase.hpp"
 
+#define DELCAER_INPUT_ELEMENT_FINAL() {}
+
+#define DELCAER_INPUT_ELEMENT() DELCAER_INPUT_ELEMENT_FINAL(),
 namespace RenderCore
 {
     class RENDERCORE_DLL StaticMeshDirectXProxy : public StaticMeshRenderProxyBase
@@ -21,7 +24,7 @@ namespace RenderCore
 
         ComPtr<ID3D12PipelineState> m_pipelineState;
 
-        D3D12_INPUT_ELEMENT_DESC* inputLayoutDesc;
+        std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDesc;
         uint16_t inputLayoutSize,NumIndices;
         std::wstring AssetsPath;
     public:

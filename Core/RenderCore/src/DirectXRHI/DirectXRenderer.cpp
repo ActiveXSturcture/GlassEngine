@@ -216,7 +216,7 @@ namespace RenderCore
         }
         mesh->BuildPSO(m_rootSignature.Get(),m_device.Get());
         // Create the command list.
-        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_CommandList)));
+        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), mesh->GetPSO(), IID_PPV_ARGS(&m_CommandList)));
         cam.BuildConstBuffer(m_device);
 
 
@@ -308,7 +308,7 @@ namespace RenderCore
     void DirectXRenderer::PopulateCommandList()
     {
         ThrowIfFailed(m_commandAllocator->Reset());
-        ThrowIfFailed(m_CommandList->Reset(m_commandAllocator.Get(), nullptr));
+        ThrowIfFailed(m_CommandList->Reset(m_commandAllocator.Get(), mesh->GetPSO()));
         // Set necessary state.
         m_CommandList->SetGraphicsRootSignature(m_rootSignature.Get());
         // m_CommandList->SetPipelineState(m_pipelineState.Get());
@@ -331,7 +331,7 @@ namespace RenderCore
         // Record commands.
         const float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
         m_CommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
+        mesh->PopulateDrawCommand(m_CommandList);
         //mesh->PopulateDrawCommand(m_CommandList);
         // Indicate that the back buffer will now be used to present.
         m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
