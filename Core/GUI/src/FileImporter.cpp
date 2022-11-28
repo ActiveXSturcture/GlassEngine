@@ -11,7 +11,7 @@ namespace GUI
     {
         Assimp::Importer import;
         const aiScene *scene = import.ReadFile(pFile,
-                                               aiProcess_CalcTangentSpace |
+                                                    aiProcess_CalcTangentSpace |
                                                    aiProcess_Triangulate |
                                                    aiProcess_JoinIdenticalVertices |
                                                    aiProcess_SortByPType |
@@ -64,9 +64,18 @@ namespace GUI
             }
 
             offset /= sizeof(float);
+            Meshs[index].VerticesDataOffset = offset;
             Meshs[index].IndexBuffer = new uint32_t[Meshs[index].NumIndices]{0};
             Meshs[index].VertexBuffer = new float[Meshs[index].NumVertices * offset]{0.0f};
-            memcpy(Meshs[index].IndexBuffer, mesh->mFaces->mIndices, Meshs[index].NumIndices * sizeof(float));
+            //memcpy(Meshs[index].IndexBuffer, mesh->mFaces->mIndices, Meshs[index].NumIndices * sizeof(unsigned int));
+            for(uint32_t Index{0};Index < mesh->mNumFaces ;Index++)
+            {
+                const aiFace& face = mesh->mFaces[Index];
+                uint32_t realIndex = Index * 3;
+                Meshs[index].IndexBuffer[realIndex] = face.mIndices[0];
+                Meshs[index].IndexBuffer[realIndex+1] = face.mIndices[1];
+                Meshs[index].IndexBuffer[realIndex+2] = face.mIndices[2];
+            }
             for (uint32_t VerticesIndex{0}; VerticesIndex < Meshs[index].NumVertices; VerticesIndex++)
             {
                 uint16_t VerticesOffset = VerticesIndex * offset;

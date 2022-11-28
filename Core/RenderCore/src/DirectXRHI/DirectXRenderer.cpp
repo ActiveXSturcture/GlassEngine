@@ -206,9 +206,9 @@ namespace RenderCore
         std::vector<GUI::INPUT_LAYOUT_OFFSET> layout;
         layout.push_back(GUI::INPUT_LAYOUT_POSITION);
         layout.push_back(GUI::INPUT_LAYOUT_NORMAL);
-        layout.push_back(GUI::INPUT_LAYOUT_TEXCOORD);
-        layout.push_back(GUI::INPUT_LAYOUT_TANGENT);
-        layout.push_back(GUI::INPUT_LAYOUT_BITANGENT);
+        //layout.push_back(GUI::INPUT_LAYOUT_TEXCOORD);
+        //layout.push_back(GUI::INPUT_LAYOUT_TANGENT);
+        //layout.push_back(GUI::INPUT_LAYOUT_BITANGENT);
         mesh = std::make_unique<StaticMeshDirectXProxy>(L"name",L"File",layout);
         if(mesh->IsLoadedSucceed())
         {
@@ -361,8 +361,8 @@ namespace RenderCore
 
         if (IsRightButtonDown)
         {
-            cam.RotateYaw(-this->DeltaX * deltaTime * 5.0f);
-            cam.RotatePitch(-this->DeltaY * deltaTime* 5.0f);
+            cam.RotateYaw(-this->DeltaX * deltaTime * 10.0f);
+            cam.RotatePitch(-this->DeltaY * deltaTime* 10.0f);
             // cam.RotateRoll(-this->DeltaX * deltaTime);
             // cam.MoveForward(this->DeltaX*deltaTime);
             if (IsMoveForward)

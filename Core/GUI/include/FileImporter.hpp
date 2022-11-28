@@ -17,7 +17,7 @@ namespace GUI
     {
         uint32_t NumIndices;
         uint32_t NumVertices;
-        uint32_t NumerVerticesData;
+        uint32_t VerticesDataOffset;
         float *VertexBuffer;
         uint32_t *IndexBuffer;
         bool hasIndex, hasTexture;
@@ -26,7 +26,7 @@ namespace GUI
         {
             NumIndices = 0;
             NumVertices = 0;
-            NumerVerticesData = 0;
+            VerticesDataOffset = 0;
             VertexBuffer = nullptr;
             IndexBuffer = nullptr;
             hasIndex = false;
@@ -87,6 +87,9 @@ namespace GUI
                 break;
             case INPUT_LAYOUT_BITANGENT:
                 return "BITANGENT";
+                break;
+            default:
+                return "NONE";
                 break;
             }
         }

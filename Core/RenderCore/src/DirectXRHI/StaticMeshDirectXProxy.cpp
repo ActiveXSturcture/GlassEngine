@@ -19,7 +19,8 @@ namespace RenderCore
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
         D3D12_RASTERIZER_DESC rasterizerDesc{};
         rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        // rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+        //rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+        //rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
         psoDesc.InputLayout = {inputLayoutDesc.data(), inputLayoutSize};
         psoDesc.pRootSignature = m_RootSignature;
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
@@ -43,7 +44,20 @@ namespace RenderCore
     {
         const GUI::MeshData &mesh = pImporter->GetMeshWidthIndex(0);
         {
-            const UINT vertexBufferSize = mesh.NumVertices * sizeof(float);
+            /*float *cube_vertices = new float[24]{
+                // front
+                -1.0, -1.0, 1.0,
+                1.0, -1.0, 1.0,
+                1.0, 1.0, 1.0,
+                -1.0, 1.0, 1.0,
+                // back
+                -1.0, -1.0, -1.0,
+                1.0, -1.0, -1.0,
+                1.0, 1.0, -1.0,
+                -1.0, 1.0, -1.0};*/
+            
+            NumVertices = mesh.NumVertices;
+            const UINT vertexBufferSize = NumVertices* mesh.VerticesDataOffset * sizeof(float);
             ThrowIfFailed(m_device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -61,10 +75,29 @@ namespace RenderCore
 
             // Initialize the vertex buffer view.
             m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-            m_vertexBufferView.StrideInBytes = sizeof(float) * 9;
+            m_vertexBufferView.StrideInBytes =  mesh.VerticesDataOffset * sizeof(float);
             m_vertexBufferView.SizeInBytes = vertexBufferSize;
         }
         {
+            /*uint32_t* cube_indexs = new uint32_t[36]{
+                // front
+                0, 1, 2,
+                2, 3, 0,
+                // right
+                1, 5, 6,
+                6, 2, 1,
+                // back
+                7, 6, 5,
+                5, 4, 7,
+                // left
+                4, 0, 3,
+                3, 7, 4,
+                // bottom
+                4, 5, 1,
+                1, 0, 4,
+                // top
+                3, 2, 6,
+                6, 7, 3};*/
             const UINT indexBufferSize = sizeof(uint32_t) * mesh.NumIndices;
             NumIndices = mesh.NumIndices;
             ThrowIfFailed(m_device->CreateCommittedResource(
@@ -81,7 +114,7 @@ namespace RenderCore
             m_indexBuffer->Unmap(0, nullptr);
             m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
             m_indexBufferView.SizeInBytes = indexBufferSize;
-            m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+            m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
         }
     }
     void StaticMeshDirectXProxy::BuildVertexAndPixelShader()
@@ -103,7 +136,7 @@ namespace RenderCore
         m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_CommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
         m_CommandList->IASetIndexBuffer(&m_indexBufferView);
-
+        // m_CommandList->DrawInstanced(NumVertices,1,0,0);
         m_CommandList->DrawIndexedInstanced(NumIndices, 1, 0, 0, 0);
     }
 

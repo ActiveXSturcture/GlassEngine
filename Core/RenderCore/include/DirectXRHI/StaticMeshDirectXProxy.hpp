@@ -25,7 +25,7 @@ namespace RenderCore
         ComPtr<ID3D12PipelineState> m_pipelineState;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayoutDesc;
-        uint16_t inputLayoutSize,NumIndices;
+        uint16_t inputLayoutSize,NumIndices,NumVertices;
         std::wstring AssetsPath;
     public:
         StaticMeshDirectXProxy(const std::wstring& Name,const std::wstring& FilePath,
