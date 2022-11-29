@@ -11,11 +11,13 @@ namespace GUI
     {
         Assimp::Importer import;
         const aiScene *scene = import.ReadFile(pFile,
-                                                    aiProcess_CalcTangentSpace |
-                                                   aiProcess_Triangulate |
-                                                   aiProcess_JoinIdenticalVertices |
-                                                   aiProcess_SortByPType |
-                                                   aiProcess_MakeLeftHanded);
+                                                    aiProcess_CalcTangentSpace 
+                                                   |aiProcess_Triangulate 
+                                                   |aiProcess_JoinIdenticalVertices 
+                                                   |aiProcess_SortByPType 
+                                                   |aiProcess_MakeLeftHanded
+                                                   |aiProcess_FlipUVs
+                                                   );
 
         if (nullptr == scene)
         {

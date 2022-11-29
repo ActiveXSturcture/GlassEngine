@@ -14,12 +14,11 @@ namespace RenderCore
     void StaticMeshDirectXProxy::BuildPSO(ID3D12RootSignature *m_RootSignature, ID3D12Device *m_device)
     {
         InitInputLayoutDesc();
-        BuildVertexAndIndexBuffer(m_device);
         BuildVertexAndPixelShader();
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
         D3D12_RASTERIZER_DESC rasterizerDesc{};
         rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        //rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+        rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
         //rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
         psoDesc.InputLayout = {inputLayoutDesc.data(), inputLayoutSize};
         psoDesc.pRootSignature = m_RootSignature;
@@ -27,8 +26,8 @@ namespace RenderCore
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
         psoDesc.RasterizerState = rasterizerDesc;
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        psoDesc.DepthStencilState.DepthEnable = FALSE;
-        psoDesc.DepthStencilState.StencilEnable = FALSE;
+        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         psoDesc.NumRenderTargets = 1;
@@ -40,7 +39,7 @@ namespace RenderCore
     void StaticMeshDirectXProxy::BuildDrawCommand()
     {
     }
-    void StaticMeshDirectXProxy::BuildVertexAndIndexBuffer(ID3D12Device *m_device)
+    void StaticMeshDirectXProxy::BuildVertexAndIndexBufferStatic(ComPtr<ID3D12Device>& m_device,ComPtr<ID3D12GraphicsCommandList>& Cmd)
     {
         const GUI::MeshData &mesh = pImporter->GetMeshWidthIndex(0);
         {
@@ -58,23 +57,8 @@ namespace RenderCore
             
             NumVertices = mesh.NumVertices;
             const UINT vertexBufferSize = NumVertices* mesh.VerticesDataOffset * sizeof(float);
-            ThrowIfFailed(m_device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_vertexBuffer)));
-
-            // Copy the triangle data to the vertex buffer.
-            UINT8 *pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            memcpy(pVertexDataBegin, mesh.VertexBuffer, vertexBufferSize);
-            m_vertexBuffer->Unmap(0, nullptr);
-
+            CreateStaticCommitResource(vertexBufferSize,m_device,Cmd,mesh.VertexBuffer,m_vertexBuffer,L"Vertex Buffer");
             // Initialize the vertex buffer view.
-            m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
             m_vertexBufferView.StrideInBytes =  mesh.VerticesDataOffset * sizeof(float);
             m_vertexBufferView.SizeInBytes = vertexBufferSize;
         }
@@ -100,22 +84,15 @@ namespace RenderCore
                 6, 7, 3};*/
             const UINT indexBufferSize = sizeof(uint32_t) * mesh.NumIndices;
             NumIndices = mesh.NumIndices;
-            ThrowIfFailed(m_device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_indexBuffer)));
-            UINT8 *pIndexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pIndexDataBegin)));
-            memcpy(pIndexDataBegin, mesh.IndexBuffer, indexBufferSize);
-            m_indexBuffer->Unmap(0, nullptr);
-            m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+            CreateStaticCommitResource(indexBufferSize,m_device,Cmd,mesh.IndexBuffer,m_indexBuffer,L"Index Buffer");
             m_indexBufferView.SizeInBytes = indexBufferSize;
             m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
         }
+    }
+    void StaticMeshDirectXProxy::BindStaticData()
+    {
+        m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+        m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
     }
     void StaticMeshDirectXProxy::BuildVertexAndPixelShader()
     {

@@ -1,10 +1,8 @@
 #pragma once
 #include "DirectXRenderer.hpp"
 #include "StaticMeshRenderProxyBase.hpp"
+#include "Utils/DXHelperFunc.h"
 
-#define DELCAER_INPUT_ELEMENT_FINAL() {}
-
-#define DELCAER_INPUT_ELEMENT() DELCAER_INPUT_ELEMENT_FINAL(),
 namespace RenderCore
 {
     class RENDERCORE_DLL StaticMeshDirectXProxy : public StaticMeshRenderProxyBase
@@ -39,10 +37,14 @@ namespace RenderCore
         inline ID3D12PipelineState* GetPSO(){return m_pipelineState.Get();}
 
         void BuildPSO(ID3D12RootSignature* m_RootSignature,ID3D12Device* m_device);
+
+        void BuildVertexAndIndexBufferStatic(ComPtr<ID3D12Device>& m_device,ComPtr<ID3D12GraphicsCommandList>& Cmd);
+
+        void BindStaticData();
     protected:
         void BuildVertexAndPixelShader();
 
-        void BuildVertexAndIndexBuffer(ID3D12Device* m_device);
+        
 
         void BuildShaderResourceViewsHeap(ID3D12Device* m_device);
 

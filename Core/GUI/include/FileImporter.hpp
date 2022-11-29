@@ -18,8 +18,8 @@ namespace GUI
         uint32_t NumIndices;
         uint32_t NumVertices;
         uint32_t VerticesDataOffset;
-        float *VertexBuffer;
-        uint32_t *IndexBuffer;
+        float* VertexBuffer;
+        uint32_t* IndexBuffer;
         bool hasIndex, hasTexture;
         std::vector<INPUT_LAYOUT_OFFSET> InputLayout;
         MeshData()

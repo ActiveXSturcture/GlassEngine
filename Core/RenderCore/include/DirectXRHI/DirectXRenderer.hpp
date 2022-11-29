@@ -58,10 +58,12 @@ namespace RenderCore
         ComPtr<IDXGISwapChain3> m_swapChain;
         ComPtr<ID3D12Device> m_device;
         ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
+        ComPtr<ID3D12Resource> m_depthStencilView;
         ComPtr<ID3D12CommandAllocator> m_commandAllocator;
         ComPtr<ID3D12CommandQueue> m_commandQueue;
         ComPtr<ID3D12RootSignature> m_rootSignature;
         ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+        ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
         //Const Buffer View
         ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
         //Shader Resource View
