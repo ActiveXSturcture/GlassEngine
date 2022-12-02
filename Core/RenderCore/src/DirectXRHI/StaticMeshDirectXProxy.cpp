@@ -18,7 +18,7 @@ namespace RenderCore
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
         D3D12_RASTERIZER_DESC rasterizerDesc{};
         rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+        rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
         //rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
         psoDesc.InputLayout = {inputLayoutDesc.data(), inputLayoutSize};
         psoDesc.pRootSignature = m_RootSignature;
@@ -57,7 +57,7 @@ namespace RenderCore
             
             NumVertices = mesh.NumVertices;
             const UINT vertexBufferSize = NumVertices* mesh.VerticesDataOffset * sizeof(float);
-            CreateStaticCommitResource(vertexBufferSize,m_device,Cmd,mesh.VertexBuffer,m_vertexBuffer,L"Vertex Buffer");
+            CreateStaticCommitResource(vertexBufferSize,m_device,Cmd,mesh.VertexBuffer.data(),m_vertexBuffer,L"Vertex Buffer");
             // Initialize the vertex buffer view.
             m_vertexBufferView.StrideInBytes =  mesh.VerticesDataOffset * sizeof(float);
             m_vertexBufferView.SizeInBytes = vertexBufferSize;
@@ -84,7 +84,7 @@ namespace RenderCore
                 6, 7, 3};*/
             const UINT indexBufferSize = sizeof(uint32_t) * mesh.NumIndices;
             NumIndices = mesh.NumIndices;
-            CreateStaticCommitResource(indexBufferSize,m_device,Cmd,mesh.IndexBuffer,m_indexBuffer,L"Index Buffer");
+            CreateStaticCommitResource(indexBufferSize,m_device,Cmd,mesh.IndexBuffer.data(),m_indexBuffer,L"Index Buffer");
             m_indexBufferView.SizeInBytes = indexBufferSize;
             m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
         }

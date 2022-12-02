@@ -11,12 +11,14 @@ namespace GUI
     {
         Assimp::Importer import;
         const aiScene *scene = import.ReadFile(pFile,
-                                                    aiProcess_CalcTangentSpace 
-                                                   |aiProcess_Triangulate 
-                                                   |aiProcess_JoinIdenticalVertices 
-                                                   |aiProcess_SortByPType 
+                                                   aiProcess_CalcTangentSpace 
+                                                    |aiProcess_Triangulate 
+                                                     |aiProcess_JoinIdenticalVertices 
+                                                    |aiProcess_SortByPType 
                                                    |aiProcess_MakeLeftHanded
-                                                   |aiProcess_FlipUVs
+                                                   
+                                                   //|aiProcess_FlipUVs
+                                                  // |aiProcess_ForceGenNormals
                                                    );
 
         if (nullptr == scene)
@@ -42,87 +44,83 @@ namespace GUI
                 {
                     Meshs[index].InputLayout.push_back(INPUT_LAYOUT_POSITION);
                     offset += MeshData::GetInputLayoutOffset(INPUT_LAYOUT_POSITION);
+                    std::cout<<mesh->mName.C_Str()<<": Has Position!"<<std::endl;
                 }
                 else if (InputLayout[i] == INPUT_LAYOUT_NORMAL && mesh->HasNormals())
                 {
                     Meshs[index].InputLayout.push_back(INPUT_LAYOUT_NORMAL);
                     offset += MeshData::GetInputLayoutOffset(INPUT_LAYOUT_NORMAL);
+                    std::cout<<mesh->mName.C_Str()<<": Has Normal!"<<std::endl;
                 }
                 else if (InputLayout[i] == INPUT_LAYOUT_TANGENT && mesh->HasTangentsAndBitangents())
                 {
                     Meshs[index].InputLayout.push_back(INPUT_LAYOUT_TANGENT);
                     offset += MeshData::GetInputLayoutOffset(INPUT_LAYOUT_TANGENT);
+                    std::cout<<mesh->mName.C_Str()<<": Has Tangent!"<<std::endl;
                 }
                 else if (InputLayout[i] == INPUT_LAYOUT_BITANGENT && mesh->HasTangentsAndBitangents())
                 {
                     Meshs[index].InputLayout.push_back(INPUT_LAYOUT_BITANGENT);
                     offset += MeshData::GetInputLayoutOffset(INPUT_LAYOUT_BITANGENT);
+                    std::cout<<mesh->mName.C_Str()<<": Has BiTangent!"<<std::endl;
                 }
                 else if (InputLayout[i] == INPUT_LAYOUT_COLOR)
                 {
                     Meshs[index].InputLayout.push_back(INPUT_LAYOUT_COLOR);
                     offset += MeshData::GetInputLayoutOffset(INPUT_LAYOUT_COLOR);
+                    std::cout<<mesh->mName.C_Str()<<": Has Color!"<<std::endl;
                 }
             }
 
             offset /= sizeof(float);
             Meshs[index].VerticesDataOffset = offset;
-            Meshs[index].IndexBuffer = new uint32_t[Meshs[index].NumIndices]{0};
-            Meshs[index].VertexBuffer = new float[Meshs[index].NumVertices * offset]{0.0f};
-            //memcpy(Meshs[index].IndexBuffer, mesh->mFaces->mIndices, Meshs[index].NumIndices * sizeof(unsigned int));
+            //Meshs[index].VertexBuffer.resize(Meshs[index].NumVertices * offset);
+            //Meshs[index].IndexBuffer.resize(Meshs[index].NumIndices);
             for(uint32_t Index{0};Index < mesh->mNumFaces ;Index++)
             {
                 const aiFace& face = mesh->mFaces[Index];
-                uint32_t realIndex = Index * 3;
-                Meshs[index].IndexBuffer[realIndex] = face.mIndices[0];
-                Meshs[index].IndexBuffer[realIndex+1] = face.mIndices[1];
-                Meshs[index].IndexBuffer[realIndex+2] = face.mIndices[2];
+                Meshs[index].IndexBuffer.push_back(face.mIndices[0]);
+                Meshs[index].IndexBuffer.push_back(face.mIndices[1]);
+                Meshs[index].IndexBuffer.push_back(face.mIndices[2]);
             }
             for (uint32_t VerticesIndex{0}; VerticesIndex < Meshs[index].NumVertices; VerticesIndex++)
             {
                 uint16_t VerticesOffset = VerticesIndex * offset;
-                uint16_t LayoutOffset{0};
                 for (uint16_t orderIndex{0}; orderIndex < Meshs[index].InputLayout.size(); orderIndex++)
                 {
 
                     switch (Meshs[index].InputLayout[orderIndex])
                     {
                     case 1:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mVertices[VerticesIndex].x;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mVertices[VerticesIndex].y;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mVertices[VerticesIndex].z;
-                        LayoutOffset += 3;
+                        Meshs[index].VertexBuffer.push_back(mesh->mVertices[VerticesIndex].x);
+                        Meshs[index].VertexBuffer.push_back(mesh->mVertices[VerticesIndex].y);
+                        Meshs[index].VertexBuffer.push_back(mesh->mVertices[VerticesIndex].z);
                         break;
                     case 2:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mNormals[VerticesIndex].x;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mNormals[VerticesIndex].y;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mNormals[VerticesIndex].z;
-                        LayoutOffset += 3;
+                        Meshs[index].VertexBuffer.push_back(mesh->mNormals[VerticesIndex].z);
+                        Meshs[index].VertexBuffer.push_back(mesh->mNormals[VerticesIndex].y);
+                        Meshs[index].VertexBuffer.push_back(mesh->mNormals[VerticesIndex].x);
                         break;
                     case 3:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mColors[0][VerticesIndex].r;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mColors[0][VerticesIndex].g;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mColors[0][VerticesIndex].b;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 3] = mesh->mColors[0][VerticesIndex].a;
-                        LayoutOffset += 4;
+                        Meshs[index].VertexBuffer.push_back(mesh->mColors[0][VerticesIndex].r);
+                        Meshs[index].VertexBuffer.push_back(mesh->mColors[0][VerticesIndex].g);
+                        Meshs[index].VertexBuffer.push_back(mesh->mColors[0][VerticesIndex].b);
+                        Meshs[index].VertexBuffer.push_back(mesh->mColors[0][VerticesIndex].a);
                         break;
                     case 4:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mTextureCoords[0][VerticesIndex].x;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mTextureCoords[0][VerticesIndex].y;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mTextureCoords[0][VerticesIndex].z;
-                        LayoutOffset += 3;
+                        Meshs[index].VertexBuffer.push_back(mesh->mTextureCoords[0][VerticesIndex].x);
+                        Meshs[index].VertexBuffer.push_back(mesh->mTextureCoords[0][VerticesIndex].y);
+                        Meshs[index].VertexBuffer.push_back(mesh->mTextureCoords[0][VerticesIndex].z);
                         break;
                     case 5:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mTangents[VerticesIndex].x;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mTangents[VerticesIndex].y;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mTangents[VerticesIndex].z;
-                        LayoutOffset += 3;
+                        Meshs[index].VertexBuffer.push_back(mesh->mTangents[VerticesIndex].x);
+                        Meshs[index].VertexBuffer.push_back(mesh->mTangents[VerticesIndex].y);
+                        Meshs[index].VertexBuffer.push_back(mesh->mTangents[VerticesIndex].z);
                         break;
                     case 6:
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset] = mesh->mBitangents[VerticesIndex].x;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 1] = mesh->mBitangents[VerticesIndex].y;
-                        Meshs[index].VertexBuffer[VerticesOffset + LayoutOffset + 2] = mesh->mBitangents[VerticesIndex].z;
-                        LayoutOffset += 3;
+                        Meshs[index].VertexBuffer.push_back(mesh->mBitangents[VerticesIndex].x);
+                        Meshs[index].VertexBuffer.push_back(mesh->mBitangents[VerticesIndex].y);
+                        Meshs[index].VertexBuffer.push_back(mesh->mBitangents[VerticesIndex].z);
                         break;
                     default:
                         break;

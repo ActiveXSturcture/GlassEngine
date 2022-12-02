@@ -18,8 +18,6 @@
 // referenced by the GPU.
 using Microsoft::WRL::ComPtr;
 
-namespace RenderCore
-{
 
 
 inline std::string HrToString(HRESULT hr)
@@ -256,5 +254,3 @@ void ResetUniquePtrArray(T* uniquePtrArray)
     }
 }
 
-
-}

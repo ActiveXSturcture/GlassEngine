@@ -10,3 +10,4 @@ if(MSVC)
 endif()
 
 target_link_libraries(GUI imgui assimp)
+target_include_directories(GUI PUBLIC include)

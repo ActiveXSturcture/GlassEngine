@@ -1,19 +1,25 @@
 #include <iostream>
 #include <memory>
-#include "DirectXRHI/DirectXWindow.hpp"
-#include "DirectXRHI/DirectXRenderer.hpp"
+#include "GlassEngine.hpp"
+//#include "DirectXRHI/DirectXWindow.hpp"
+//#include "DirectXRHI/DirectXRenderer.hpp"
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
+/*int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     std::shared_ptr<RenderCore::DirectXRenderer> renderer = std::make_shared<RenderCore::DirectXRenderer>(1280,720,L"Hello Window");
     RenderCore::DirectXWindow window(renderer.get(),hInstance,nCmdShow);
-    //return MessageBox(NULL, L"Hello, OneFLOW CFD!", L"Computation", 0);
-}
-/*
-int main()
+    return MessageBox(NULL, L"Hello, OneFLOW CFD!", L"Computation", 0);
+}*/
+
+int main(int argc, char** argv)
 {
-    std::cout<<"Hello World!"<<std::endl;
+    EngineCore::GlassEngine* engine = new EngineCore::GlassEngine();
+    engine->startEngine();
+    engine->initialize();
+    
+    engine->shutdownEngine();
+    /*std::cout<<"Hello World!"<<std::endl;
     
     std::shared_ptr<RenderCore::DirectXRenderer> renderer = std::make_shared<RenderCore::DirectXRenderer>(1280,720,L"Hello Window");
     RenderCore::DirectXWindow window(renderer.get());
@@ -39,6 +45,5 @@ int main()
     //使用GLFW完成操作后，通常是在应用程序退出之前，需要终止GLFW
     glfwTerminate();
     system("pause");
-    return 0;
+    return 0;*/
 }
-*/

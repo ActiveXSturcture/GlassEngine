@@ -18,8 +18,8 @@ namespace GUI
         uint32_t NumIndices;
         uint32_t NumVertices;
         uint32_t VerticesDataOffset;
-        float* VertexBuffer;
-        uint32_t* IndexBuffer;
+        std::vector<float> VertexBuffer;
+        std::vector<uint32_t> IndexBuffer;
         bool hasIndex, hasTexture;
         std::vector<INPUT_LAYOUT_OFFSET> InputLayout;
         MeshData()
@@ -27,15 +27,12 @@ namespace GUI
             NumIndices = 0;
             NumVertices = 0;
             VerticesDataOffset = 0;
-            VertexBuffer = nullptr;
-            IndexBuffer = nullptr;
             hasIndex = false;
             hasTexture = false;
             InputLayout.clear();
         }
         ~MeshData()
         {
-            delete[] VertexBuffer, IndexBuffer;
             std::cout << "Release MeshData" << std::endl;
         }
         static uint8_t GetInputLayoutOffset(const INPUT_LAYOUT_OFFSET &offset)
@@ -102,7 +99,6 @@ namespace GUI
         void BuildMeshData(const aiScene *scene, uint32_t &NumVertices, uint32_t &NumIndices);
         std::vector<MeshData> Meshs;
         uint32_t NumVertices, NumIndices;
-        // float* m_Position,*m_Normal,*m_Texcoords,*m_Tangent,*m_Bitangent,*m_TexCoord;
         uint32_t *m_Indices;
         std::vector<INPUT_LAYOUT_OFFSET> InputLayout;
 
